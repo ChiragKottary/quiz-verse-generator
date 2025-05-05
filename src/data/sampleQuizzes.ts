@@ -17,7 +17,7 @@ export const sampleQuizzes: QuizSectionData[] = [
   // Web Development Section
   {
     ...angularQuizData,
-    quizzes: [...angularQuizData.quizzes, ...angularAdvancedQuizData.quizzes]
+    quizzes: [ ...angularQuizData.quizzes,...angularAdvancedQuizData.quizzes,]
   },
   javascriptAdvancedQuizData,
   
