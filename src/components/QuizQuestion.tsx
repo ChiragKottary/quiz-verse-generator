@@ -1,10 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { QuizQuestion as QuizQuestionType, QuizAnswer } from "../models/QuizTypes";
 import QuizOption from "./QuizOption";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 
 interface QuizQuestionProps {
   question: QuizQuestionType;
@@ -24,7 +25,6 @@ const QuizQuestion = ({
   const [fadeIn, setFadeIn] = useState(true);
 
   useEffect(() => {
-    // Reset state when question changes
     setSelectedOptionId(null);
     setIsRevealed(false);
     setFadeIn(true);
@@ -40,18 +40,15 @@ const QuizQuestion = ({
     
     setIsRevealed(true);
     
-    const isCorrect = selectedOptionId === question.correctOptionId;
-    
     onAnswer({
       questionId: question.id,
       selectedOptionId,
-      isCorrect,
+      isCorrect: selectedOptionId === question.correctOptionId,
     });
   };
 
   const handleNext = () => {
     setFadeIn(false);
-    // Trigger the hidden next button in the parent component
     setTimeout(() => {
       const nextButton = document.getElementById("next-question-button");
       if (nextButton) nextButton.click();
@@ -59,16 +56,26 @@ const QuizQuestion = ({
   };
 
   return (
-    <div className={cn("quiz-card p-1", fadeIn ? "fade-in" : "opacity-0")}>
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-sm font-medium text-muted-foreground">
+    <Card className={cn("quiz-card border-2", fadeIn ? "fade-in" : "opacity-0")}>
+      <CardHeader className="space-y-4">
+        <div className="flex justify-between items-center">
+          <p className="text-sm font-medium text-muted-foreground">
             Question {questionNumber} of {totalQuestions}
-          </h3>
+          </p>
+          {isRevealed && (
+            <Badge 
+              variant={selectedOptionId === question.correctOptionId ? "secondary" : "destructive"}
+              className={selectedOptionId === question.correctOptionId ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
+            >
+              {selectedOptionId === question.correctOptionId ? "Correct" : "Incorrect"}
+            </Badge>
+          )}
         </div>
-        <h2 className="text-2xl font-semibold text-foreground mb-6">{question.question}</h2>
-        
-        <div className="space-y-3">
+        <h2 className="text-2xl font-semibold text-foreground">{question.question}</h2>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="grid gap-3">
           {question.options.map((option) => (
             <QuizOption
               key={option.id}
@@ -81,36 +88,34 @@ const QuizQuestion = ({
             />
           ))}
         </div>
-        
+
         {isRevealed && question.explanation && (
-          <div className={cn(
-            "mt-6 p-4 rounded-lg bg-blue-50 border border-blue-200",
-            "text-blue-800 text-sm animate-fade-in"
-          )}>
+          <div className="slide-in overflow-hidden rounded-lg bg-blue-50 border border-blue-200 p-4 text-blue-900">
             <p className="font-medium mb-1">Explanation:</p>
-            <p>{question.explanation}</p>
+            <p className="text-sm text-blue-800">{question.explanation}</p>
           </div>
         )}
-        
-        <div className="mt-8 flex justify-end">
-          {isRevealed ? (
-            <Button 
-              onClick={handleNext} 
-              className="flex items-center gap-2"
-            >
-              Next Question <ArrowRight size={16} />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleSubmit} 
-              disabled={!selectedOptionId}
-            >
-              Submit Answer
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
+      </CardContent>
+
+      <CardFooter className="flex justify-end pt-6">
+        {isRevealed ? (
+          <Button 
+            onClick={handleNext} 
+            className="flex items-center gap-2 min-w-[140px]"
+          >
+            Next Question <ArrowRight size={16} />
+          </Button>
+        ) : (
+          <Button 
+            onClick={handleSubmit} 
+            disabled={!selectedOptionId}
+            className="min-w-[140px]"
+          >
+            Submit Answer
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
   );
 };
 

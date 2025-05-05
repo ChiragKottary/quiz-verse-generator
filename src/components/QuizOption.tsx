@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { QuizOption as QuizOptionType } from "../models/QuizTypes";
 import { cn } from "@/lib/utils";
@@ -25,20 +24,20 @@ const QuizOption = ({
 
   const getBgColor = () => {
     if (!isRevealed) {
-      return isSelected ? "bg-primary/20" : "bg-white";
+      return isSelected ? "bg-primary/10" : "bg-card";
     }
     
     if (isCorrect) {
-      return "bg-green-100";
+      return "bg-green-50";
     } else if (isSelected) {
-      return "bg-red-100";
+      return "bg-red-50";
     }
-    return "bg-white";
+    return "bg-card hover:bg-card";
   };
 
   const getBorderColor = () => {
     if (!isRevealed) {
-      return isSelected ? "border-primary" : "border-gray-200";
+      return isSelected ? "border-primary" : "border-input hover:border-primary/50";
     }
     
     if (isCorrect) {
@@ -46,41 +45,45 @@ const QuizOption = ({
     } else if (isSelected) {
       return "border-red-500";
     }
-    return "border-gray-200";
+    return "border-input";
   };
   
   return (
-    <div
+    <button
+      type="button"
+      role="radio"
+      aria-checked={isSelected}
+      disabled={disabled}
       className={cn(
-        "option-transition p-4 rounded-xl border-2 cursor-pointer mb-3 relative",
+        "option-transition w-full text-left p-4 rounded-lg border-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         getBgColor(),
         getBorderColor(),
         {
-          "ring-2 ring-primary ring-offset-1": isSelected && !isRevealed,
-          "opacity-80": disabled && !isSelected && !isRevealed,
-          "cursor-not-allowed": disabled
+          "cursor-pointer": !disabled,
+          "cursor-not-allowed opacity-60": disabled && !isSelected && !isRevealed,
         }
       )}
       onClick={() => !disabled && onSelect()}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="flex justify-between items-center">
-        <span className="text-lg">{option.text}</span>
+      <div className="flex justify-between items-center gap-4">
+        <span className="text-base flex-1">{option.text}</span>
         {isRevealed && (
-          <div className={cn(
-            "flex items-center justify-center w-6 h-6 rounded-full",
-            isCorrect ? "bg-green-500 text-white" : isSelected ? "bg-red-500 text-white" : "hidden"
+          <span className={cn(
+            "flex items-center justify-center w-6 h-6 rounded-full text-white shrink-0",
+            isCorrect ? "bg-green-500" : isSelected ? "bg-red-500" : "hidden"
           )}>
-            {isCorrect ? <Check size={16} /> : <X size={16} />}
-          </div>
+            {isCorrect ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+          </span>
         )}
       </div>
       
       {isHovering && !disabled && !isRevealed && (
-        <div className="absolute inset-0 bg-primary/5 rounded-xl"></div>
+        <div className="absolute inset-0 rounded-lg bg-primary/5 pointer-events-none" />
       )}
-    </div>
+    </button>
   );
 };
 
