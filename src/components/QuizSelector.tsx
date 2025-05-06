@@ -16,11 +16,25 @@ import { Badge } from "@/components/ui/badge";
 interface QuizSelectorProps {
   sections: QuizSectionData[];
   onSelectQuiz: (quiz: Quiz) => void;
+  onGenerateNewQuestions: (quizId: string, topic: string) => Promise<void>;
 }
 
-const QuizSelector = ({ sections, onSelectQuiz }: QuizSelectorProps) => {
+const QuizSelector = ({ sections, onSelectQuiz, onGenerateNewQuestions }: QuizSelectorProps) => {
   const [activeSection, setActiveSection] = useState(sections[0].id);
+  const [generatingQuestions, setGeneratingQuestions] = useState<Record<string, boolean>>({});
   
+  const handleGenerateNewQuestions = async (quizId: string, topic: string) => {
+    // Set loading state for this specific quiz
+    setGeneratingQuestions(prev => ({...prev, [quizId]: true}));
+    
+    try {
+      await onGenerateNewQuestions(quizId, topic);
+    } finally {
+      // Clear loading state
+      setGeneratingQuestions(prev => ({...prev, [quizId]: false}));
+    }
+  };
+
   return (
     <div className="fade-in">
       <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
@@ -84,12 +98,20 @@ const QuizSelector = ({ sections, onSelectQuiz }: QuizSelectorProps) => {
                       </div>
                     </CardContent>
                     
-                    <CardFooter>
+                    <CardFooter className="flex gap-2">
                       <Button 
-                        className="w-full group-hover:bg-primary/90 transition-colors" 
+                        className="flex-1 group-hover:bg-primary/90 transition-colors" 
                         onClick={() => onSelectQuiz(quiz)}
                       >
                         Start Quiz
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleGenerateNewQuestions(quiz.id, quiz.title)}
+                        disabled={generatingQuestions[quiz.id]}
+                      >
+                        {generatingQuestions[quiz.id] ? "Generating..." : "New Questions"}
                       </Button>
                     </CardFooter>
                   </Card>
