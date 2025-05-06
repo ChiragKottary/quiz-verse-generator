@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
-import { Quiz, QuizAnswer, QuizResult } from "../models/QuizTypes";
+import { Quiz, QuizAnswer, QuizResult, QuizQuestion as QuizQuestionType } from "../models/QuizTypes";
 import QuizQuestion from "./QuizQuestion";
 import QuizProgress from "./QuizProgress";
 import QuizResults from "./QuizResults";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { shuffleArray } from "@/lib/utils";
 
 interface QuizContainerProps {
   quiz: Quiz;
@@ -18,24 +18,28 @@ const QuizContainer = ({ quiz, onBack }: QuizContainerProps) => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [startTime, setStartTime] = useState<number>(Date.now());
+  const [shuffledQuestions, setShuffledQuestions] = useState<QuizQuestionType[]>([]);
   
   useEffect(() => {
-    // Reset the quiz when a new quiz is selected
+    // Reset the quiz when a new quiz is selected and shuffle questions
     setCurrentQuestionIndex(0);
     setAnswers([]);
     setQuizCompleted(false);
     setQuizResult(null);
     setStartTime(Date.now());
+    setShuffledQuestions(shuffleArray(quiz.questions));
   }, [quiz.id]);
   
-  const currentQuestion = quiz.questions[currentQuestionIndex];
+  const currentQuestion = shuffledQuestions.length > 0 
+    ? shuffledQuestions[currentQuestionIndex] 
+    : quiz.questions[currentQuestionIndex];
   
   const handleAnswer = (answer: QuizAnswer) => {
     setAnswers([...answers, answer]);
   };
   
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < quiz.questions.length - 1) {
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
       setTimeout(() => {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       }, 300); // Delay for transition effect
@@ -44,7 +48,7 @@ const QuizContainer = ({ quiz, onBack }: QuizContainerProps) => {
       const correctAnswers = answers.filter(answer => answer.isCorrect).length;
       
       const result: QuizResult = {
-        totalQuestions: quiz.questions.length,
+        totalQuestions: shuffledQuestions.length,
         correctAnswers: correctAnswers,
         answers: answers,
         timeTaken: endTime - startTime,
@@ -62,6 +66,7 @@ const QuizContainer = ({ quiz, onBack }: QuizContainerProps) => {
     setQuizCompleted(false);
     setQuizResult(null);
     setStartTime(Date.now());
+    setShuffledQuestions(shuffleArray(quiz.questions));
   };
   
   if (quizCompleted && quizResult) {
@@ -73,6 +78,10 @@ const QuizContainer = ({ quiz, onBack }: QuizContainerProps) => {
         onSelectNewQuiz={onBack}
       />
     );
+  }
+  
+  if (shuffledQuestions.length === 0) {
+    return <div>Loading...</div>;
   }
   
   return (
@@ -87,14 +96,14 @@ const QuizContainer = ({ quiz, onBack }: QuizContainerProps) => {
       
       <QuizProgress 
         currentQuestion={currentQuestionIndex + 1}
-        totalQuestions={quiz.questions.length}
+        totalQuestions={shuffledQuestions.length}
       />
       
       <QuizQuestion
         question={currentQuestion}
         onAnswer={handleAnswer}
         questionNumber={currentQuestionIndex + 1}
-        totalQuestions={quiz.questions.length}
+        totalQuestions={shuffledQuestions.length}
       />
       
       <div className="hidden">

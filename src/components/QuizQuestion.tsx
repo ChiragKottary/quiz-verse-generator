@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { QuizQuestion as QuizQuestionType, QuizAnswer } from "../models/QuizTypes";
+import { QuizQuestion as QuizQuestionType, QuizAnswer, QuizOption as QuizOptionType } from "../models/QuizTypes";
 import QuizOption from "./QuizOption";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, shuffleArray } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 
@@ -23,11 +23,13 @@ const QuizQuestion = ({
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [fadeIn, setFadeIn] = useState(true);
+  const [shuffledOptions, setShuffledOptions] = useState<QuizOptionType[]>([]);
 
   useEffect(() => {
     setSelectedOptionId(null);
     setIsRevealed(false);
     setFadeIn(true);
+    setShuffledOptions(shuffleArray(question.options));
   }, [question.id]);
 
   const handleOptionSelect = (optionId: string) => {
@@ -76,7 +78,7 @@ const QuizQuestion = ({
 
       <CardContent className="space-y-4">
         <div className="grid gap-3">
-          {question.options.map((option) => (
+          {shuffledOptions.map((option) => (
             <QuizOption
               key={option.id}
               option={option}
