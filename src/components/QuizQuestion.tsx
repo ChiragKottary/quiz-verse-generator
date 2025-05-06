@@ -4,14 +4,18 @@ import QuizOption from "./QuizOption";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, shuffleArray } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { generateQuestions } from "@/lib/gemini";
 
 interface QuizQuestionProps {
   question: QuizQuestionType;
   onAnswer: (answer: QuizAnswer) => void;
   questionNumber: number;
   totalQuestions: number;
+  onUpdateQuestion?: (newQuestion: QuizQuestionType) => void;
+  quizId: string;
+  quizTopic: string;
 }
 
 const QuizQuestion = ({
@@ -19,18 +23,23 @@ const QuizQuestion = ({
   onAnswer,
   questionNumber,
   totalQuestions,
+  onUpdateQuestion,
+  quizId,
+  quizTopic
 }: QuizQuestionProps) => {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [fadeIn, setFadeIn] = useState(true);
   const [shuffledOptions, setShuffledOptions] = useState<QuizOptionType[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setSelectedOptionId(null);
     setIsRevealed(false);
     setFadeIn(true);
     setShuffledOptions(shuffleArray(question.options));
-  }, [question.id]);
+  }, [question.id, question.options]);
 
   const handleOptionSelect = (optionId: string) => {
     if (isRevealed) return;
@@ -57,8 +66,37 @@ const QuizQuestion = ({
     }, 100);
   };
 
+  const handleGenerateNewQuestion = async () => {
+    if (!onUpdateQuestion) return;
+    
+    setIsGenerating(true);
+    setError(null);
+    
+    try {
+      // Generate a single question on the current topic
+      const questions = await generateQuestions({
+        topic: quizTopic,
+        numberOfQuestions: 1,
+        difficulty: 'medium',
+        quizId: quizId
+      });
+      
+      if (questions && questions.length > 0) {
+        // Update the current question with the new one
+        onUpdateQuestion(questions[0]);
+      } else {
+        setError("Failed to generate a new question. Please try again.");
+      }
+    } catch (err) {
+      setError("An error occurred while generating a new question.");
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
-    <Card className={cn("quiz-card border-2", fadeIn ? "fade-in" : "opacity-0")}>
+    <Card className={cn("quiz-card border-2 m-8", fadeIn ? "fade-in" : "opacity-0")}>
       <CardHeader className="space-y-4">
         <div className="flex justify-between items-center">
           <p className="text-sm font-medium text-muted-foreground">
@@ -73,7 +111,10 @@ const QuizQuestion = ({
             </Badge>
           )}
         </div>
-        <h2 className="text-2xl font-semibold text-foreground">{question.question}</h2>
+        <div className="flex justify-between items-start">
+          <h2 className="text-2xl font-semibold text-foreground">{question.question}</h2>
+        </div>
+        {error && <p className="text-sm text-red-500">{error}</p>}
       </CardHeader>
 
       <CardContent className="space-y-4">
